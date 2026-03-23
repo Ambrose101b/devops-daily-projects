@@ -5,12 +5,11 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '🚚 Code is ready!'
-                sh 'ls -R' // This helps you see where everything is
+                sh 'ls -R'
             }
         }
         stage('Lint & Test') {
             steps {
-                # This 'dir' block is the magic fix!
                 dir('day2-system-monitor') {
                     echo '🔍 Checking Python syntax...'
                     sh 'python3 -m py_compile monitor.py'
