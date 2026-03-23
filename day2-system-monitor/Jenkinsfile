@@ -4,21 +4,25 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo '🚚 Getting the latest code from the folder...'
-                // Since we use volumes, the code is already there!
-                sh 'ls -lh'
+                echo '🚚 Code is ready!'
+                sh 'ls -R' // This helps you see where everything is
             }
         }
         stage('Lint & Test') {
             steps {
-                echo '🔍 Checking Python syntax...'
-                sh 'python3 -m py_compile monitor.py'
+                # This 'dir' block is the magic fix!
+                dir('day2-system-monitor') {
+                    echo '🔍 Checking Python syntax...'
+                    sh 'python3 -m py_compile monitor.py'
+                }
             }
         }
         stage('Execute') {
             steps {
-                echo '🚀 Running the System Monitor...'
-                sh 'python3 monitor.py'
+                dir('day2-system-monitor') {
+                    echo '🚀 Running the System Monitor...'
+                    sh 'python3 monitor.py'
+                }
             }
         }
     }
