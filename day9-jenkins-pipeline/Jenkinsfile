@@ -1,0 +1,30 @@
+pipeline {
+    agent any 
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '🚚 Downloading the full repository from GitHub...'
+                // This lists the folders so you can see Day1, Day2, etc.
+                sh 'ls -lh' 
+            }
+        }
+        stage('Lint & Test') {
+            steps {
+                // We "jump" into the Day 2 folder to check the Python code
+                dir('day2-system-monitor') {
+                    echo '🔍 Checking Python syntax for System Monitor...'
+                    sh 'python3 -m py_compile monitor.py'
+                }
+            }
+        }
+        stage('Execute') {
+            steps {
+                dir('day2-system-monitor') {
+                    echo '🚀 Running the System Monitor Application...'
+                    sh 'python3 monitor.py'
+                }
+            }
+        }
+    }
+}
