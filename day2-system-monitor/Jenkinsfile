@@ -1,0 +1,25 @@
+pipeline {
+    agent any 
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '🚚 Getting the latest code from the folder...'
+                // Since we use volumes, the code is already there!
+                sh 'ls -lh'
+            }
+        }
+        stage('Lint & Test') {
+            steps {
+                echo '🔍 Checking Python syntax...'
+                sh 'python3 -m py_compile monitor.py'
+            }
+        }
+        stage('Execute') {
+            steps {
+                echo '🚀 Running the System Monitor...'
+                sh 'python3 monitor.py'
+            }
+        }
+    }
+}
