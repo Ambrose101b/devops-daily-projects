@@ -1,0 +1,43 @@
+pipeline {
+    agent any 
+
+    stages {
+        stage('Checkout & Sync') {
+            steps {
+                // Pulls from GitHub via your ngrok webhook
+                checkout scm
+                echo "✅ Webhook Received: Code synced to Jenkins"
+            }
+        }
+
+        stage('Build Maintenance Image') {
+            steps {
+                // Build the Docker image specifically from this Day 12 folder
+                dir('day12-storage-automation') {
+                    sh 'docker build -t storage-cleaner:latest .'
+                }
+            }
+        }
+
+        stage('Run Storage Tests') {
+            steps {
+                dir('day12-storage-automation') {
+                    echo '📊 Running Python Disk Monitoring...'
+                    sh 'python3 monitor_disk.py'
+                    
+                    echo '🧹 Running Bash Log Cleanup...'
+                    sh 'bash clean_logs.sh'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "🏆 Day 12 SUCCESS: Storage is healthy."
+        }
+        failure {
+            echo "❌ Day 12 FAILURE: Check Disk Usage or Script Errors."
+        }
+    }
+}
