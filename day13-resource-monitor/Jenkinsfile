@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('sync code') {
+            steps {
+                echo 'pulling day 13 code'
+                checkout scm
+            }
+        }
+        
+        stage('Build Image') {
+            steps {
+                dir('day13-resource-monitor') {
+                    echo 'building the resource-monitor docker image...'
+                    sh 'docker build -t resource-monitor:latest .'
+                }
+            }
+        }
+
+        stage('Run system check') {
+            steps {
+                echo 'Running python CPU/MONITOR Monitor...'
+                sh 'docker run resource-monitor:latest'
+            }
+        }
+    }
+    post {
+        always {
+            echo 'ALWAYS RUNNING: Cleaning up temperary docker memeory...'
+            sh 'docker system prune -f'
+        }
+        success {
+            echo 'SUCCESS: CPU and RAM are under 80%.'
+        }
+        failure {
+            echo 'FAILURE: CPU or RAM exceeded the 80% threshold.'
+        }
+    }
+}
