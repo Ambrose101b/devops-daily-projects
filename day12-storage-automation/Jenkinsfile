@@ -20,9 +20,13 @@ pipeline {
         
         stage('Run Health Check') {
             steps {
-                echo '🚀 Running the container to check disk and clean logs...'
-                // We run the container to check the disk and clean the logs
+                echo '📊 Running the Python Disk Check (Default CMD)...'
+                // This runs the default CMD (monitor_disk.py)
                 sh 'docker run --rm -v /tmp:/tmp storage-tool:latest'
+                
+                echo '🧹 Running the Bash Log Cleanup (Override CMD)...'
+                // By adding 'bash cleanup.sh' at the end, we OVERRIDE the Python script and run the Bash script instead!
+                sh 'docker run --rm -v /tmp:/tmp storage-tool:latest bash cleanup.sh'
             }
         }
     }
