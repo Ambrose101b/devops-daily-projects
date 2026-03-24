@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+    stages {
+        stage('Sync code') {
+            steps {
+                echo 'pulling code for day 14'
+                checkout scm
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                dir('day14-uptime-alerts') {
+                    sh 'docker build -t uptime-monitor:latest .'
+                }
+            }
+        }
+
+        stage('Run Uptime Check') {
+            steps {
+                dir('day14-uptime-alerts') {
+                    sh 'docker run --rm uptime-monitor:latest'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'SUCCESS: website is down'
+            sh 'curl -d " Day 14: Github is UP and Running!" ntfy.sh/ambrose_devops_alerts'
+        }
+        failure {
+            echo 'FAILURE: Website is down'
+            sh 'curl -d " Crtitical: Github is down! check the server immediately!" ntfy.sh/mbrose_devops_alerts '
+        }
+        always {
+            sh 'docker rmi uptime-monitor:latest || true'   
+        }
+    }
+}
