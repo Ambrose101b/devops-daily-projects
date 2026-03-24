@@ -1,30 +1,52 @@
 pipeline {
     agent any 
 
+    environment {
+        // 1. Replace with your actual Docker Hub username
+        DOCKER_HUB_USER = 'ambroser' 
+        IMAGE_NAME = 'system-monitor'
+        // 2. This must match the ID you just created in Jenkins
+        REGISTRY_CREDS = 'docker-hub-creds'
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                echo '🚚 Downloading the full repository from GitHub...'
-                // This lists the folders so you can see Day1, Day2, etc.
-                sh 'ls -lh' 
+                echo '🚚 Pulling latest code from GitHub...'
+                checkout scm
             }
         }
-        stage('Lint & Test') {
+
+        stage('Build Docker Image') {
             steps {
-                // We "jump" into the Day 2 folder to check the Python code
-                dir('day2-system-monitor') {
-                    echo '🔍 Checking Python syntax for System Monitor...'
-                    sh 'python3 -m py_compile monitor.py'
+                script {
+                    echo "🔨 Building Image: ${DOCKER_HUB_USER}/${IMAGE_NAME}..."
+                    // We point to the Dockerfile in day3-docker-intro but use the app from day2-system-monitor
+                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest -f day3-docker-intro/Dockerfile day2-system-monitor/"
                 }
             }
         }
-        stage('Execute') {
+
+        stage('Push to Docker Hub') {
             steps {
-                dir('day2-system-monitor') {
-                    echo '🚀 Running the System Monitor Application...'
-                    sh 'python3 monitor.py'
+                script {
+                    echo "🚀 Shipping to Docker Hub..."
+                    // This block securely handles your login token
+                    withCredentials([usernamePassword(credentialsId: REGISTRY_CREDS, passwordVariable: 'DOCK_PASS', usernameVariable: 'DOCK_USER')]) {
+                        sh "echo \$DOCK_PASS | docker login -u \$DOCK_USER --password-stdin"
+                        sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                    }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ SUCCESS: Image is now live on Docker Hub!'
+        }
+        failure {
+            echo '❌ ERROR: Something went wrong. Check the logs above.'
         }
     }
 }
