@@ -1,0 +1,38 @@
+pipeline {
+    agent any 
+    
+    stages {
+        stage('Sync Code') {
+            steps {
+                echo '📥 Pulling fresh code from GitHub...'
+                checkout scm 
+            }
+        }
+        
+        stage('Build Image') {
+            steps {
+                dir('day12-storage-automation') {
+                    echo '🔨 Building the storage-tool Docker image...'
+                    sh 'docker build -t storage-tool:latest .'
+                }
+            }
+        }
+        
+        stage('Run Health Check') {
+            steps {
+                echo '🚀 Running the container to check disk and clean logs...'
+                // We run the container to check the disk and clean the logs
+                sh 'docker run --rm -v /tmp:/tmp storage-tool:latest'
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '✅ SUCCESS: Day 12 Automation Complete. Server is healthy!'
+        }
+        failure {
+            echo '❌ FAILURE: Check disk space or script syntax.'
+        }
+    }
+}
