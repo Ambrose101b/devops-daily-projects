@@ -1,0 +1,39 @@
+pipeline {
+    agent any 
+    
+    stages {
+        stage('Sync Code') {
+            steps {
+                checkout scm 
+            }
+        }
+        
+        stage('Build Parser Image') {
+            steps {
+                dir('day15-log-parser') {
+                    sh 'docker build -t log-scanner:latest .'
+                }
+            }
+        }
+        
+        stage('Run Log Analysis') {
+            steps {
+                dir('day15-log-parser') {
+                    // Run the scanner
+                    sh 'docker run --rm log-scanner:latest'
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '✅ SUCCESS: Logs are healthy.'
+            sh 'curl -d "✅ Day 15: Server logs are healthy. No major errors." ntfy.sh/ambrose_devops_alerts'
+        }
+        failure {
+            echo '❌ FAILURE: Log scanner found too many errors!'
+            sh 'curl -d "🚨 CRITICAL: Day 15 Log Scanner detected multiple errors! Check Jenkins output immediately." ntfy.sh/ambrose_devops_alerts'
+        }
+    }
+}
