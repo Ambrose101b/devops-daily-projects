@@ -3,7 +3,7 @@ import time
 import sys
 
 # We point this to where Docker will mount the folder
-DIR_NAME = "/tmp/server_backups"
+DIR_NAME = "/app/server_backups"
 DAYS_THRESHOLD = 7
 SECONDS_IN_A_DAY = 86400
 
