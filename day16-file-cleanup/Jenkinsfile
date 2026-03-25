@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+
+    triggers {
+        cron('H 2 * * *')
+    }
+
+    stages {
+        stage('sync code') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build Image') {
+            steps {
+                dir('day16-file-cleanup') {
+                    sh 'docker build -t pure-python-cleaner:latest .'
+                }
+            }
+        }
+        stage('Run pythonic cleanup') {
+            steps {
+                dir('day16-file-cleanup') {
+                    sh 'docker run --rm -v /tmp/server_backups:/app/server_backups pure-python-cleaner:latest'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'SUCCESS: pythonic cleanup complete'
+            sh 'curl -d "🧹 Day 16: Pure Python automated cleanup completed successfully!" ntfy.sh/ambrose_devops_alerts'
+        }
+        failure {
+            echo '❌ FAILURE: Python pipeline crashed.'
+            sh 'curl -d "🚨 CRITICAL: Day 16 Python Cleanup failed!" ntfy.sh/ambrose_devops_alerts'
+        }
+    }
+}
