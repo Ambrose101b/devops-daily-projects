@@ -1,0 +1,47 @@
+pipeline {
+    agent any 
+    
+    // ⏰ Scheduled Trigger: Runs automatically every day around 2:00 AM
+    triggers {
+        cron('H 2 * * *')
+    }
+    
+    stages {
+        stage('Sync Code') {
+            steps {
+                checkout scm 
+            }
+        }
+        
+        stage('Build Walker Image') {
+            steps {
+                dir('day17-directory-tree') {
+                    sh 'docker build -t directory-walker:latest .'
+                }
+            }
+        }
+        
+        stage('Map & Scan Directory') {
+            steps {
+                dir('day17-directory-tree') {
+                    echo '🚀 Running Directory Walker against /tmp/day17_tree_test...'
+                    
+                    // The volume map bridges the local folder to the container
+                    sh 'docker run --rm -v /tmp/day17_tree_test:/app/scandir directory-walker:latest'
+                }
+            }
+        }
+    }
+    
+    // 🔔 Alert System
+    post {
+        success {
+            echo '✅ SUCCESS: Directory tree scan completed.'
+            sh 'curl -d "🌲 Day 17: Directory Tree Scanner ran successfully!" ntfy.sh/ambrose_devops_alerts'
+        }
+        failure {
+            echo '❌ FAILURE: Directory tree scan crashed.'
+            sh 'curl -d "🚨 CRITICAL: Day 17 Directory Scanner failed! Check the Jenkins logs." ntfy.sh/ambrose_devops_alerts'
+        }
+    }
+}
