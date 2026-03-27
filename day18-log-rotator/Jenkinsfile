@@ -36,12 +36,16 @@ pipeline {
     // 🔔 Alert System
     post {
         success {
-            echo '✅ SUCCESS: Logs rotated and compressed successfully.'
-            sh 'curl -d "🗜️ Day 18: Log Rotation & Compression completed successfully!" ntfy.sh/ambrose_devops_alerts'
+            dir('day18-log-rotator') {
+                echo '✅ SUCCESS: Logs rotated and compressed successfully.'
+                sh 'curl -d "🗜️ Day 18: Log Rotation & Compression completed successfully!" ntfy.sh/ambrose_devops_alerts'
+            }
         }
         failure {
-            echo '❌ FAILURE: Log rotation crashed.'
-            sh 'curl -d "🚨 CRITICAL: Day 18 Log Rotation failed! Server disk may fill up." ntfy.sh/ambrose_devops_alerts'
+            dir('day18-log-rotator') {
+                echo '❌ FAILURE: Log rotation crashed.'
+                sh 'curl -d "🚨 CRITICAL: Day 18 Log Rotation failed! Server disk may fill up." ntfy.sh/ambrose_devops_alerts'
+            }
         }
     }
 }
