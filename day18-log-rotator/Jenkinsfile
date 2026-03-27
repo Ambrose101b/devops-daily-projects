@@ -1,0 +1,47 @@
+pipeline {
+    agent any 
+    
+    // ⏰ Scheduled Trigger: Run nightly maintenance at 3:00 AM
+    triggers {
+        cron('H 3 * * *')
+    }
+    
+    stages {
+        stage('Sync Code') {
+            steps {
+                checkout scm 
+            }
+        }
+        
+        stage('Build Rotator Image') {
+            steps {
+                dir('day18-log-rotator') {
+                    sh 'docker build -t log-rotator:latest .'
+                }
+            }
+        }
+        
+        stage('Execute Log Rotation') {
+            steps {
+                dir('day18-log-rotator') {
+                    echo '🚀 Running Log Rotator against /tmp/day18_logs...'
+                    
+                    // The volume map bridges the local logs folder to the container
+                    sh 'docker run --rm -v /tmp/day18_logs:/app/logs log-rotator:latest'
+                }
+            }
+        }
+    }
+    
+    // 🔔 Alert System
+    post {
+        success {
+            echo '✅ SUCCESS: Logs rotated and compressed successfully.'
+            sh 'curl -d "🗜️ Day 18: Log Rotation & Compression completed successfully!" ntfy.sh/ambrose_devops_alerts'
+        }
+        failure {
+            echo '❌ FAILURE: Log rotation crashed.'
+            sh 'curl -d "🚨 CRITICAL: Day 18 Log Rotation failed! Server disk may fill up." ntfy.sh/ambrose_devops_alerts'
+        }
+    }
+}
