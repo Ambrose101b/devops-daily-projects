@@ -1,0 +1,44 @@
+pipeline {
+    agent any 
+    
+    // ⏰ Scheduled Trigger: Run every 15 minutes, all day, every day!
+    triggers {
+        cron('H/15 * * * *')
+    }
+    
+    stages {
+        stage('Sync Code') {
+            steps {
+                checkout scm 
+            }
+        }
+        
+        stage('Build Checker Image') {
+            steps {
+                dir('day19-server-health') {
+                    sh 'docker build -t health-checker:latest .'
+                }
+            }
+        }
+        
+        stage('Execute Health Check') {
+            steps {
+                dir('day19-server-health') {
+                    echo '🚀 Running Health Check script against host hardware...'
+                    
+                    // The --pid=host flag allows the container to see the real laptop hardware
+                    sh 'docker run --rm --pid=host health-checker:latest'
+                }
+            }
+        }
+    }
+    
+    // 🔔 Alert System (Silent on success, loud on failure)
+    post {
+        failure {
+            echo '❌ FAILURE: Health check detected dangerous resource spikes!'
+            sh 'curl -d "🚨 CRITICAL: Ubuntu Server health is failing! CPU/RAM/Disk exceeds 80%." ntfy.sh/ambrose_devops_alerts'
+        }
+        // Notice we removed the "success" block. No spam when things are working!
+    }
+}
